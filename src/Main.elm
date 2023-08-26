@@ -1,39 +1,58 @@
 module Main exposing (..)
 
-{-| The idea: "Invert the control, pass in a record of continuations and let the child update choose
-which branch to take without ever needing to know what’s going on."
+{-| The idea: "Invert the control, pass in a record of continuations and let the child
+update choose which branch to take without ever needing to know what’s going on."
 
-Thanks for @hayleigh on Elm slack for coming up with this one.
+Thanks to @hayleigh on Elm slack for coming up with this one.
 
 -}
 
-
-type Msg
-    = Whatever
-    | LogOut
+import Update2 as U2
 
 
 type alias Model =
-    {}
+    { context : Context }
 
 
+type ParentMsg
+    = ContextMsg Msg
 
-{- This is in the parent update calling the child one:
 
-   ContextMsg contextMsg ->
-     Context.update contextMsg ...
-       { onNormalUpdate =
-           Data.Update.map (\context -> { model | context = context })
-             >> Data.Update.andThen wibble
-             >> Data.Update.andThen wobble
-       , onLogout =
-           Data.Update.map (\context -> { model | context = context })
-       }
--}
+defaultActions : Model -> Config ParentMsg Model
+defaultActions model =
+    { toMsg = ContextMsg
+    , changeModal = always Cmd.none
+    , resetModal = Cmd.none
+    , onUpdate =
+        U2.map (\context -> { model | context = context })
+            >> U2.andThen afterNormalUpdate
+    , onLogout =
+        U2.map (\context -> { model | context = context })
+            >> U2.andThen afterLogout
+    }
+
+
+parentUpdate : ParentMsg -> Model -> ( Model, Cmd ParentMsg )
+parentUpdate msg model =
+    case msg of
+        ContextMsg contextMsg ->
+            update (defaultActions model) contextMsg model.context
+
+
+afterNormalUpdate : model -> ( model, Cmd msg )
+afterNormalUpdate model =
+    U2.pure model
+
+
+afterLogout : model -> ( model, Cmd msg )
+afterLogout model =
+    U2.pure model
 
 
 type alias Config msg model =
     { toMsg : Msg -> msg
+
+    -- Side effects this module can ask for but does not implement itself.
     , changeModal : Modal -> Cmd msg
     , resetModal : Cmd msg
 
@@ -43,16 +62,21 @@ type alias Config msg model =
     }
 
 
-type Modal
-    = LoggingOutModal
+type Msg
+    = Whatever
+    | LogOut
 
 
 type alias Context =
     {}
 
 
-update : Msg -> Model -> Config parentMsg parentModel -> ( parentModel, Cmd parentMsg )
-update msg model config =
+type Modal
+    = LoggingOutModal
+
+
+update : Config msg model -> Msg -> Context -> ( model, Cmd msg )
+update config msg model =
     case msg of
         Whatever ->
             updateContextAndFetchStuff model
@@ -61,17 +85,14 @@ update msg model config =
         LogOut ->
             doSomeLogOutThings model
                 |> config.onLogout
-                |> withCmd (config.changeModal LoggingOutModal)
+                |> U2.withCmd (config.changeModal LoggingOutModal)
 
 
+updateContextAndFetchStuff : Context -> ( Context, Cmd msg )
 updateContextAndFetchStuff model =
-    Debug.todo ""
+    U2.pure model
 
 
+doSomeLogOutThings : Context -> ( Context, Cmd msg )
 doSomeLogOutThings model =
-    Debug.todo ""
-
-
-withCmd : Cmd msg -> ( model, Cmd msg ) -> ( model, Cmd msg )
-withCmd cmd ( model, cmds ) =
-    ( model, Cmd.batch [ cmd, cmds ] )
+    U2.pure model
