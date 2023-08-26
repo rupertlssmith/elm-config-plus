@@ -30,23 +30,23 @@ type alias Model =
 
 
 update : Actions msg model -> Msg -> Model -> ( model, Cmd msg )
-update config msg model =
+update actions msg model =
     case msg of
         Whatever ->
-            updateContextAndFetchStuff model
-                |> config.onUpdate
+            updateContextAndFetchStuff actions model
+                |> actions.onUpdate
 
         LogOut ->
-            doSomeLogOutThings model
-                |> config.onLogout
-                |> U2.withCmd (config.changeModal LoggingOutModal)
+            doSomeLogOutThings actions model
+                |> actions.onLogout
+                |> U2.withCmd (actions.changeModal LoggingOutModal)
 
 
-updateContextAndFetchStuff : Model -> ( Model, Cmd msg )
-updateContextAndFetchStuff model =
+updateContextAndFetchStuff : Actions msg model -> Model -> ( Model, Cmd msg )
+updateContextAndFetchStuff _ model =
     U2.pure model
 
 
-doSomeLogOutThings : Model -> ( Model, Cmd msg )
-doSomeLogOutThings model =
+doSomeLogOutThings : Actions msg model -> Model -> ( Model, Cmd msg )
+doSomeLogOutThings _ model =
     U2.pure model

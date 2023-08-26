@@ -16,12 +16,12 @@ type alias Model =
 
 
 type Msg
-    = ContextMsg Child.Msg
+    = ChildMsg Child.Msg
 
 
 defaultActions : Model -> Child.Actions Msg Model
 defaultActions model =
-    { toMsg = ContextMsg
+    { toMsg = ChildMsg
     , changeModal = always Cmd.none
     , resetModal = Cmd.none
     , onUpdate =
@@ -36,7 +36,7 @@ defaultActions model =
 parentUpdate : Msg -> Model -> ( Model, Cmd Msg )
 parentUpdate msg model =
     case msg of
-        ContextMsg contextMsg ->
+        ChildMsg contextMsg ->
             Child.update (defaultActions model) contextMsg model.child
 
 
