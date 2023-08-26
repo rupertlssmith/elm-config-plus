@@ -18,8 +18,8 @@ type alias Model =
 
 
 
--- This is in the parent update calling the child one:
-{-
+{- This is in the parent update calling the child one:
+
    ContextMsg contextMsg ->
      Context.update contextMsg ...
        { onNormalUpdate =
