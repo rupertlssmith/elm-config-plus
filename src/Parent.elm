@@ -7,6 +7,7 @@ Thanks to @hayleigh on Elm slack for coming up with this one.
 
 -}
 
+import Auth
 import Child
 import Update2 as U2
 
