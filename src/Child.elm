@@ -62,6 +62,14 @@ update actions msg model =
             U2.pure model
                 |> actions.onLogin { username = "", password = "" }
 
+        UpdateUsername str ->
+            ( { model | username = str }, Cmd.none )
+                |> actions.onUpdate
+
+        UpdatePassword str ->
+            ( { model | password = str }, Cmd.none )
+                |> actions.onUpdate
+
         _ ->
             U2.pure model
                 |> actions.onUpdate
