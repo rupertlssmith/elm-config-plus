@@ -1,4 +1,4 @@
-module Parent exposing (..)
+module Parent exposing (Model, Msg, update)
 
 {-| The idea: "Invert the control, pass in a record of continuations and let the child
 update choose which branch to take without ever needing to know what’s going on."
@@ -13,39 +13,45 @@ import Update2 as U2
 
 
 type alias Model =
-    { child : Child.Model }
+    { auth : Auth.Model
+    }
 
 
 type Msg
     = ChildMsg Child.Msg
+    | AuthMsg Auth.Msg
 
 
-defaultActions : Model -> Child.Actions Msg Model
-defaultActions model =
-    { toMsg = ChildMsg
-    , changeModal = always Cmd.none
-    , resetModal = Cmd.none
+authProtocol : Model -> Auth.Protocol Auth.Model Msg Model
+authProtocol model =
+    { toMsg = AuthMsg
     , onUpdate =
-        U2.map (\child -> { model | child = child })
-            >> U2.andThen afterNormalUpdate
-    , onLogout =
-        U2.map (\child -> { model | child = child })
-            >> U2.andThen afterLogout
+        U2.map (\auth -> { model | auth = auth })
+    , onLoginOk =
+        U2.map (\auth -> { model | auth = auth })
+    , onLoginFail =
+        U2.map (\auth -> { model | auth = auth })
     }
 
 
-parentUpdate : Msg -> Model -> ( Model, Cmd Msg )
-parentUpdate msg model =
+childProtocol : Model -> Child.Protocol Model Msg Model
+childProtocol model =
+    { toMsg = ChildMsg
+    , onUpdate = identity
+    , onLogin = \cred -> U2.andThen (processLogin cred)
+    }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
     case msg of
-        ChildMsg contextMsg ->
-            Child.update (defaultActions model) contextMsg model.child
+        ChildMsg innerMsg ->
+            Child.update (childProtocol model) innerMsg model
+
+        AuthMsg innerMsg ->
+            Auth.update (authProtocol model) innerMsg model.auth
 
 
-afterNormalUpdate : model -> ( model, Cmd msg )
-afterNormalUpdate model =
-    U2.pure model
-
-
-afterLogout : model -> ( model, Cmd msg )
-afterLogout model =
-    U2.pure model
+processLogin : Auth.Credentials -> Model -> ( Model, Cmd Msg )
+processLogin cred model =
+    Auth.tryLogin (authProtocol model) cred model.auth

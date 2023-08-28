@@ -1,4 +1,4 @@
-module Auth exposing (..)
+module Auth exposing (Credentials, Model, Msg, Protocol, tryLogin, update)
 
 import Http exposing (Error)
 import Json.Decode as Decode exposing (Decoder)
@@ -6,13 +6,13 @@ import Json.Encode as Encode exposing (Value)
 import Update2 as U2
 
 
-type alias Actions msg model =
+type alias Protocol submodel msg model =
     { toMsg : Msg -> msg
 
     -- Where to continue after an update.
-    , onUpdate : ( Model, Cmd msg ) -> ( model, Cmd msg )
-    , onLoginOk : ( Model, Cmd msg ) -> ( model, Cmd msg )
-    , onLoginFail : ( Model, Cmd msg ) -> ( model, Cmd msg )
+    , onUpdate : ( submodel, Cmd msg ) -> ( model, Cmd msg )
+    , onLoginOk : ( submodel, Cmd msg ) -> ( model, Cmd msg )
+    , onLoginFail : ( submodel, Cmd msg ) -> ( model, Cmd msg )
     }
 
 
@@ -56,7 +56,7 @@ type Model
     | LoggedIn User
 
 
-update : Actions msg model -> Msg -> Model -> ( model, Cmd msg )
+update : Protocol Model msg model -> Msg -> Model -> ( model, Cmd msg )
 update actions msg _ =
     case msg of
         LoginResponse (Ok user) ->
@@ -68,7 +68,7 @@ update actions msg _ =
                 |> actions.onLoginFail
 
 
-tryLogin : Actions msg model -> Credentials -> Model -> ( model, Cmd msg )
+tryLogin : Protocol Model msg model -> Credentials -> Model -> ( model, Cmd msg )
 tryLogin actions cred model =
     ( model
     , Http.post
@@ -79,13 +79,3 @@ tryLogin actions cred model =
         |> Cmd.map actions.toMsg
     )
         |> actions.onUpdate
-
-
-updateContextAndFetchStuff : Actions msg model -> Model -> ( Model, Cmd msg )
-updateContextAndFetchStuff _ model =
-    U2.pure model
-
-
-doSomeLogOutThings : Actions msg model -> Model -> ( Model, Cmd msg )
-doSomeLogOutThings _ model =
-    U2.pure model
