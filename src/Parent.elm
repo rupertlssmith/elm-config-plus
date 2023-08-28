@@ -45,7 +45,9 @@ authProtocol model =
     { toMsg = AuthMsg
     , onUpdate = U2.map setAuth
     , onLoginOk = U2.map setAuth
-    , onLoginFail = U2.map setAuth
+    , onLoginFail =
+        U2.map setAuth
+            >> U2.andThen (init () |> always)
     }
 
 
