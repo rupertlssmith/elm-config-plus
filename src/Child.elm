@@ -60,7 +60,7 @@ update actions msg model =
     case msg of
         LogIn ->
             U2.pure model
-                |> actions.onLogin { username = "", password = "" }
+                |> actions.onLogin { username = model.username, password = model.password }
 
         UpdateUsername str ->
             ( { model | username = str }, Cmd.none )

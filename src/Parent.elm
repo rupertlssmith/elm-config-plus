@@ -10,7 +10,6 @@ Thanks to @hayleigh on Elm slack for coming up with this one.
 import Auth
 import Browser
 import Child
-import Config exposing (config)
 import Html
 import Html.Styled
 import Update2 as U2
@@ -39,23 +38,28 @@ subscriptions _ =
 
 authProtocol : Model -> Auth.Protocol Auth.Model Msg Model
 authProtocol model =
+    let
+        setAuth auth =
+            { model | auth = auth }
+    in
     { toMsg = AuthMsg
-    , onUpdate =
-        U2.map (\auth -> { model | auth = auth })
-    , onLoginOk =
-        U2.map (\auth -> { model | auth = auth })
-    , onLoginFail =
-        U2.map (\auth -> { model | auth = auth })
+    , onUpdate = U2.map setAuth
+    , onLoginOk = U2.map setAuth
+    , onLoginFail = U2.map setAuth
     }
 
 
 childProtocol : Model -> Child.Protocol Child.Model Msg Model
 childProtocol model =
+    let
+        setChild child =
+            { model | child = child }
+    in
     { toMsg = ChildMsg
-    , onUpdate = U2.map (\child -> { model | child = child })
+    , onUpdate = U2.map setChild
     , onLogin =
         \cred ->
-            U2.map (\child -> { model | child = child })
+            U2.map setChild
                 >> U2.andThen (processLogin cred)
     }
 
