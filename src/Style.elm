@@ -26,7 +26,7 @@ global =
                 Css.property "background" <|
                     "linear-gradient(rgb(120, 116, 120) 0%, "
                         ++ String.fromFloat headerPx
-                        ++ "px, rgb(225, 212, 214) 0px, rgb(208, 212, 214) 100%)"
+                        ++ "px, rgb(225, 212, 214) 0px, rgb(208, 212, 224) 100%)"
             )
         ]
     ]
