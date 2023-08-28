@@ -1,19 +1,17 @@
-module Child exposing (Model, Msg, Protocol, update, view)
+module Child exposing (Model, Msg, Protocol, init, update, view)
 
 import Auth exposing (Credentials)
-import Browser
 import Config exposing (config)
 import Css
 import Css.Global
 import Grid
-import Html.Styled as Html exposing (div, form, h4, img, label, span, styled, text, toUnstyled)
+import Html.Styled as Html exposing (Html, div, form, h4, img, label, span, styled, text, toUnstyled)
 import Html.Styled.Attributes as HA exposing (for, name, src)
 import Html.Styled.Events as HE exposing (onClick, onInput)
 import Responsive
 import Styles exposing (lg, md, sm, xl)
 import TheSett.Buttons as Buttons
 import TheSett.Cards as Cards
-import TheSett.Debug
 import TheSett.Laf as Laf exposing (devices, fonts, responsiveMeta, wrapper)
 import TheSett.Textfield as Textfield
 import Update2 as U2
@@ -40,11 +38,24 @@ type Msg
     | UpdatePasswordVerificiation String
 
 
-type alias Model a =
-    a
+type alias Model =
+    { laf : Laf.Model
+    , username : String
+    , password : String
+    , passwordVerify : String
+    }
 
 
-update : Protocol (Model a) msg model -> Msg -> Model a -> ( model, Cmd msg )
+init : Model
+init =
+    { laf = Laf.init
+    , username = ""
+    , password = ""
+    , passwordVerify = ""
+    }
+
+
+update : Protocol Model msg model -> Msg -> Model -> ( model, Cmd msg )
 update actions msg model =
     case msg of
         LogIn ->
@@ -86,41 +97,21 @@ global =
 
 {-| Top level view function.
 -}
-view : Model a -> Html.Html Msg
+view : Model -> Html Msg
 view model =
-    text "body"
+    let
+        innerView =
+            [ responsiveMeta
+            , fonts
+            , Laf.style devices
+            , Css.Global.global global
+            , loginView model
+            ]
+    in
+    div [] innerView
 
 
 
--- styledBody : Model a -> Html.Styled.Html Msg
--- styledBody model =
---     let
---         innerView =
---             [ responsiveMeta
---             , fonts
---             , Laf.style devices
---             , Css.Global.global global
---             , case model of
---                 Error errMsg ->
---                     errorView errMsg
---                 Restoring initModel ->
---                     initialView
---                 Initialized initModel ->
---                     initializedView initModel
---             ]
---         debugStyle =
---             Css.Global.global <|
---                 TheSett.Debug.global Laf.devices
---     in
---     div [] innerView
--- errorView errMsg =
---     framing <|
---         [ card "images/data_center-large.png"
---             "Initialization Error"
---             [ text ("App failed to initialize: " ++ errMsg) ]
---             []
---             devices
---         ]
 -- initializedView : InitializedModel -> Html.Styled.Html Msg
 -- initializedView model =
 --     case model.session of
@@ -136,46 +127,42 @@ view model =
 --             authenticatedView model state
 --         AuthAPI.Challenged Auth.NewPasswordRequired ->
 --             requiresNewPasswordView model
--- initialView : Html.Styled.Html Msg
--- initialView =
---     framing <|
---         [ card "images/data_center-large.png"
---             "Attempting to Restore"
---             [ text "Attempting to restore authentication using a local refresh token." ]
---             []
---             devices
---         ]
--- loginView : { a | laf : Laf.Model, username : String, password : String } -> Html.Styled.Html Msg
--- loginView model =
---     framing <|
---         [ card "images/data_center-large.png"
---             "Log In"
---             [ form []
---                 [ Textfield.text
---                     LafMsg
---                     [ 1 ]
---                     model.laf
---                     [ Textfield.value model.username ]
---                     [ onInput UpdateUsername
---                     ]
---                     [ text "Username" ]
---                     devices
---                 , Textfield.password
---                     LafMsg
---                     [ 2 ]
---                     model.laf
---                     [ Textfield.value model.password
---                     ]
---                     [ onInput UpdatePassword
---                     ]
---                     [ text "Password" ]
---                     devices
---                 ]
---             ]
---             [ Buttons.button [] [ onClick LogIn ] [ text "Log In" ] devices
---             ]
---             devices
---         ]
+
+
+loginView : { a | laf : Laf.Model, username : String, password : String } -> Html Msg
+loginView model =
+    framing <|
+        [ card "images/data_center-large.png"
+            "Log In"
+            [ form []
+                [ Textfield.text
+                    LafMsg
+                    [ 1 ]
+                    model.laf
+                    [ Textfield.value model.username ]
+                    [ onInput UpdateUsername
+                    ]
+                    [ text "Username" ]
+                    devices
+                , Textfield.password
+                    LafMsg
+                    [ 2 ]
+                    model.laf
+                    [ Textfield.value model.password
+                    ]
+                    [ onInput UpdatePassword
+                    ]
+                    [ text "Password" ]
+                    devices
+                ]
+            ]
+            [ Buttons.button [] [ onClick LogIn ] [ text "Log In" ] devices
+            ]
+            devices
+        ]
+
+
+
 -- notPermittedView : { a | laf : Laf.Model, username : String, password : String } -> Html.Styled.Html Msg
 -- notPermittedView model =
 --     framing <|
@@ -306,69 +293,76 @@ view model =
 --             ]
 --             devices
 --         ]
--- framing : List (Html.Styled.Html Msg) -> Html.Styled.Html Msg
--- framing innerHtml =
---     styled div
---         [ Responsive.deviceStyle devices
---             (\device -> Css.marginTop <| Responsive.rhythmPx 3 device)
---         ]
---         []
---         [ Grid.grid
---             [ sm [ Grid.columns 12 ] ]
---             []
---             [ Grid.row
---                 [ sm [ Grid.center ] ]
---                 []
---                 [ Grid.col
---                     []
---                     []
---                     innerHtml
---                 ]
---             ]
---             devices
---         ]
--- card :
---     String
---     -> String
---     -> List (Html.Styled.Html Msg)
---     -> List (Html.Styled.Html Msg)
---     -> Responsive.ResponsiveStyle
---     -> Html.Styled.Html Msg
--- card imageUrl title cardBody controls devices =
---     Cards.card
---         [ sm
---             [ Styles.styles
---                 [ Css.maxWidth <| Css.vw 100
---                 , Css.minWidth <| Css.px 310
---                 , Css.backgroundColor <| paperWhite
---                 ]
---             ]
---         , md
---             [ Styles.styles
---                 [ Css.maxWidth <| Css.px 420
---                 , Css.minWidth <| Css.px 400
---                 , Css.backgroundColor <| paperWhite
---                 ]
---             ]
---         ]
---         []
---         [ Cards.image
---             [ Styles.height 6
---             , sm [ Cards.src imageUrl ]
---             ]
---             []
---             [ styled div
---                 [ Css.position Css.relative
---                 , Css.height <| Css.pct 100
---                 ]
---                 []
---                 []
---             ]
---         , Cards.title title
---         , Cards.body cardBody
---         , Cards.controls controls
---         ]
---         devices
+
+
+framing : List (Html Msg) -> Html Msg
+framing innerHtml =
+    styled div
+        [ Responsive.deviceStyle devices
+            (\device -> Css.marginTop <| Responsive.rhythmPx 3 device)
+        ]
+        []
+        [ Grid.grid
+            [ sm [ Grid.columns 12 ] ]
+            []
+            [ Grid.row
+                [ sm [ Grid.center ] ]
+                []
+                [ Grid.col
+                    []
+                    []
+                    innerHtml
+                ]
+            ]
+            devices
+        ]
+
+
+card :
+    String
+    -> String
+    -> List (Html Msg)
+    -> List (Html Msg)
+    -> Responsive.ResponsiveStyle
+    -> Html Msg
+card imageUrl title cardBody controls devices =
+    Cards.card
+        [ sm
+            [ Styles.styles
+                [ Css.maxWidth <| Css.vw 100
+                , Css.minWidth <| Css.px 310
+                , Css.backgroundColor <| paperWhite
+                ]
+            ]
+        , md
+            [ Styles.styles
+                [ Css.maxWidth <| Css.px 420
+                , Css.minWidth <| Css.px 400
+                , Css.backgroundColor <| paperWhite
+                ]
+            ]
+        ]
+        []
+        [ Cards.image
+            [ Styles.height 6
+            , sm [ Cards.src imageUrl ]
+            ]
+            []
+            [ styled div
+                [ Css.position Css.relative
+                , Css.height <| Css.pct 100
+                ]
+                []
+                []
+            ]
+        , Cards.title title
+        , Cards.body cardBody
+        , Cards.controls controls
+        ]
+        devices
+
+
+
 -- permissionsToChips : List String -> List (Html.Styled.Html Msg)
 -- permissionsToChips permissions =
 --     List.map

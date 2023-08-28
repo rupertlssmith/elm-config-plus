@@ -18,6 +18,7 @@ import Update2 as U2
 
 type alias Model =
     { auth : Auth.Model
+    , child : Child.Model
     }
 
 
@@ -28,7 +29,7 @@ type Msg
 
 init : flags -> ( Model, Cmd Msg )
 init _ =
-    ( { auth = Auth.init }, Cmd.none )
+    ( { auth = Auth.init, child = Child.init }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -48,11 +49,14 @@ authProtocol model =
     }
 
 
-childProtocol : Model -> Child.Protocol Model Msg Model
+childProtocol : Model -> Child.Protocol Child.Model Msg Model
 childProtocol model =
     { toMsg = ChildMsg
-    , onUpdate = identity
-    , onLogin = \cred -> U2.andThen (processLogin cred)
+    , onUpdate = U2.map (\child -> { model | child = child })
+    , onLogin =
+        \cred ->
+            U2.map (\child -> { model | child = child })
+                >> U2.andThen (processLogin cred)
     }
 
 
@@ -60,7 +64,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ChildMsg innerMsg ->
-            Child.update (childProtocol model) innerMsg model
+            Child.update (childProtocol model) innerMsg model.child
 
         AuthMsg innerMsg ->
             Auth.update (authProtocol model) innerMsg model.auth
@@ -75,7 +79,7 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Protocol Pattern Example"
     , body =
-        [ Child.view model
+        [ Child.view model.child
             |> Html.Styled.toUnstyled
             |> Html.map ChildMsg
         ]
