@@ -1,7 +1,9 @@
-module Auth exposing (Credentials, Model, Msg, Protocol, tryLogin, update)
+module Auth exposing (Credentials, Model, Msg, Protocol, init, tryLogin, update)
 
+import Config
 import Http exposing (Error)
 import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Extra as DE
 import Json.Encode as Encode exposing (Value)
 import Update2 as U2
 
@@ -26,15 +28,11 @@ type alias User =
     }
 
 
-andMap =
-    Decode.map2 (|>)
-
-
 userDecoder : Decoder User
 userDecoder =
     Decode.succeed User
-        |> andMap (Decode.field "username" Decode.string)
-        |> andMap (Decode.field "accesskey" Decode.string)
+        |> DE.andMap (Decode.field "username" Decode.string)
+        |> DE.andMap (Decode.field "accesskey" Decode.string)
 
 
 type alias Credentials =
@@ -56,6 +54,11 @@ type Model
     | LoggedIn User
 
 
+init : Model
+init =
+    NotAuthed
+
+
 update : Protocol Model msg model -> Msg -> Model -> ( model, Cmd msg )
 update actions msg _ =
     case msg of
@@ -72,7 +75,7 @@ tryLogin : Protocol Model msg model -> Credentials -> Model -> ( model, Cmd msg 
 tryLogin actions cred model =
     ( model
     , Http.post
-        { url = "https://service.com/login"
+        { url = Config.config.authRoot
         , body = encodeCredentials cred |> Http.jsonBody
         , expect = Http.expectJson LoginResponse userDecoder
         }

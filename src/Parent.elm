@@ -1,4 +1,4 @@
-module Parent exposing (Model, Msg, update)
+module Parent exposing (Model, Msg, init, subscriptions, update, view)
 
 {-| The idea: "Invert the control, pass in a record of continuations and let the child
 update choose which branch to take without ever needing to know what’s going on."
@@ -8,7 +8,11 @@ Thanks to @hayleigh on Elm slack for coming up with this one.
 -}
 
 import Auth
+import Browser
 import Child
+import Config exposing (config)
+import Html
+import Html.Styled
 import Update2 as U2
 
 
@@ -20,6 +24,16 @@ type alias Model =
 type Msg
     = ChildMsg Child.Msg
     | AuthMsg Auth.Msg
+
+
+init : flags -> ( Model, Cmd Msg )
+init _ =
+    ( { auth = Auth.init }, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
 
 
 authProtocol : Model -> Auth.Protocol Auth.Model Msg Model
@@ -55,3 +69,14 @@ update msg model =
 processLogin : Auth.Credentials -> Model -> ( Model, Cmd Msg )
 processLogin cred model =
     Auth.tryLogin (authProtocol model) cred model.auth
+
+
+view : Model -> Browser.Document Msg
+view model =
+    { title = "Protocol Pattern Example"
+    , body =
+        [ Child.view model
+            |> Html.Styled.toUnstyled
+            |> Html.map ChildMsg
+        ]
+    }
