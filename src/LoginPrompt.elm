@@ -1,4 +1,4 @@
-module Child exposing (Model, Msg, Protocol, init, update, view)
+module LoginPrompt exposing (Model, Msg, Protocol, init, update, view)
 
 import Auth exposing (Credentials)
 import Config exposing (config)
@@ -9,6 +9,7 @@ import Html.Styled as Html exposing (Html, div, form, h4, img, label, span, styl
 import Html.Styled.Attributes as HA exposing (for, name, src)
 import Html.Styled.Events as HE exposing (onClick, onInput)
 import Responsive
+import Style
 import Styles exposing (lg, md, sm, xl)
 import TheSett.Buttons as Buttons
 import TheSett.Cards as Cards
@@ -79,30 +80,6 @@ update actions msg model =
 -- View
 
 
-paperWhite =
-    Css.rgb 248 248 248
-
-
-global : List Css.Global.Snippet
-global =
-    [ Css.Global.each
-        [ Css.Global.html ]
-        [ Css.height <| Css.pct 100
-        , Responsive.deviceStyle devices
-            (\device ->
-                let
-                    headerPx =
-                        Responsive.rhythm 9.5 device
-                in
-                Css.property "background" <|
-                    "linear-gradient(rgb(120, 116, 120) 0%, "
-                        ++ String.fromFloat headerPx
-                        ++ "px, rgb(225, 212, 214) 0px, rgb(208, 212, 214) 100%)"
-            )
-        ]
-    ]
-
-
 {-| Top level view function.
 -}
 view : Model -> Html Msg
@@ -112,7 +89,7 @@ view model =
             [ responsiveMeta
             , fonts
             , Laf.style devices
-            , Css.Global.global global
+            , Css.Global.global Style.global
             , loginView model
             ]
     in
@@ -339,14 +316,14 @@ card imageUrl title cardBody controls devices =
             [ Styles.styles
                 [ Css.maxWidth <| Css.vw 100
                 , Css.minWidth <| Css.px 310
-                , Css.backgroundColor <| paperWhite
+                , Css.backgroundColor <| Style.colors.paperWhite
                 ]
             ]
         , md
             [ Styles.styles
                 [ Css.maxWidth <| Css.px 420
                 , Css.minWidth <| Css.px 400
-                , Css.backgroundColor <| paperWhite
+                , Css.backgroundColor <| Style.colors.paperWhite
                 ]
             ]
         ]

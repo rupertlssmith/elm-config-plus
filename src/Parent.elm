@@ -9,26 +9,26 @@ Thanks to @hayleigh on Elm slack for coming up with this one.
 
 import Auth
 import Browser
-import Child
 import Html
 import Html.Styled
+import LoginPrompt
 import Update2 as U2
 
 
 type alias Model =
     { auth : Auth.Model
-    , child : Child.Model
+    , child : LoginPrompt.Model
     }
 
 
 type Msg
-    = ChildMsg Child.Msg
+    = LoginPromptMsg LoginPrompt.Msg
     | AuthMsg Auth.Msg
 
 
 init : flags -> ( Model, Cmd Msg )
 init _ =
-    ( { auth = Auth.init, child = Child.init }, Cmd.none )
+    ( { auth = Auth.init, child = LoginPrompt.init }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -49,13 +49,13 @@ authProtocol model =
     }
 
 
-childProtocol : Model -> Child.Protocol Child.Model Msg Model
+childProtocol : Model -> LoginPrompt.Protocol LoginPrompt.Model Msg Model
 childProtocol model =
     let
         setChild child =
             { model | child = child }
     in
-    { toMsg = ChildMsg
+    { toMsg = LoginPromptMsg
     , onUpdate = U2.map setChild
     , onLogin = \cred -> U2.map setChild >> U2.andThen (processLogin cred)
     }
@@ -64,8 +64,8 @@ childProtocol model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ChildMsg innerMsg ->
-            Child.update (childProtocol model) innerMsg model.child
+        LoginPromptMsg innerMsg ->
+            LoginPrompt.update (childProtocol model) innerMsg model.child
 
         AuthMsg innerMsg ->
             Auth.update (authProtocol model) innerMsg model.auth
@@ -80,8 +80,8 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Protocol Pattern Example"
     , body =
-        [ Child.view model.child
+        [ LoginPrompt.view model.child
             |> Html.Styled.toUnstyled
-            |> Html.map ChildMsg
+            |> Html.map LoginPromptMsg
         ]
     }
