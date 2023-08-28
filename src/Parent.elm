@@ -45,9 +45,7 @@ authProtocol model =
     { toMsg = AuthMsg
     , onUpdate = U2.map setAuth
     , onLoginOk = U2.map setAuth
-    , onLoginFail =
-        U2.map setAuth
-            >> U2.andThen (init () |> always)
+    , onLoginFail = U2.map setAuth >> U2.andThen (init () |> always)
     }
 
 
@@ -59,10 +57,7 @@ childProtocol model =
     in
     { toMsg = ChildMsg
     , onUpdate = U2.map setChild
-    , onLogin =
-        \cred ->
-            U2.map setChild
-                >> U2.andThen (processLogin cred)
+    , onLogin = \cred -> U2.map setChild >> U2.andThen (processLogin cred)
     }
 
 
